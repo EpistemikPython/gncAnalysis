@@ -167,9 +167,13 @@ def main():
     try:
         (gnucash_file, start_year, start_month, period_type, periods, debits_show, credits_show) = argv[1:8]
         # mhs | debug
-        print "Accessing gnucash file: %s" % gnucash_file
+        print "showing " + periods + " periods of " + period_type + " starting from " + start_year + "-" + start_month
 
         start_year, start_month, periods = [ int(blah) for blah in (start_year, start_month, periods) ]
+
+        # mhs | debug
+        print "running: account_analysis.py"
+        print "using gnucash file: " + gnucash_file
 
         debits_show = debits_show == DEBITS_SHOW
         credits_show = credits_show == CREDITS_SHOW
@@ -208,7 +212,7 @@ def main():
         
         # mhs | get the list of all descendant accounts
         descendants = account_of_interest.get_descendants()
-#         print "Descendants of %s:" % account_of_interest.GetName()
+        print "Descendants of %s:" % account_of_interest.GetName()
         for subAcct in descendants:
 #             print "%s:" % subAcct.GetName()
 

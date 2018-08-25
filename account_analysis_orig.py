@@ -21,7 +21,10 @@
 #
 # @author Mark Jenkins, ParIT Worker Co-operative <mark@parit.ca>
 
-
+##  @file
+#   @brief Output all the credits and debits on an account
+#   @author Mark Jenkins, ParIT Worker Co-operative <mark@parit.ca>
+#   @ingroup python_bindings_examples
 
 # python imports
 from sys import argv, stdout
@@ -32,8 +35,7 @@ from math import log10
 import csv
 
 # gnucash imports
-from gnucash import Session, GncNumeric, Account
-from mercurial.revset import descendants
+from gnucash import Session, GncNumeric, Split
 
 # Invoke this script like the following example
 # $ gnucash-env python account_analysis.py gnucash_file.gnucash \
@@ -62,11 +64,7 @@ from mercurial.revset import descendants
 # kind of period as the value
 PERIODS = {"monthly": 1,
            "quarterly": 3,
-           # mhs | add thirdly, halfly, biyearly
-           "thirdly": 4,
-           "halfly": 6,
-           "yearly": 12,
-           "biyearly": 24 }
+           "yearly": 12 }
 
 NUM_MONTHS = 12
 
@@ -85,7 +83,8 @@ def gnc_numeric_to_python_Decimal(numeric):
     copy = GncNumeric(numeric.num(), numeric.denom())
     result = copy.to_decimal(None)
     if not result:
-        raise Exception("gnc numeric value %s can't be converted to deciaml" % copy.to_string() )
+        raise Exception("gnc numeric value %s can't be converted to deciaml" %
+                        copy.to_string() )
     digit_tuple = tuple( int(char)
                          for char in str(copy.num())
                          if char != '-' )
@@ -99,7 +98,8 @@ def next_period_start(start_year, start_month, period_type):
     # add numbers of months for the period length
     end_month = start_month + PERIODS[period_type]
     # use integer division to find out if the new end month is in a different
-    # year, what year it is, and what the end month number should be changed to.
+    # year, what year it is, and what the end month number should be changed
+    # to.
     # Because this depends on modular arithmetic, we have to curvert the month
     # values from 1-12 to 0-11 by subtracting 1 and putting it back after
     #
@@ -116,9 +116,11 @@ def next_period_start(start_year, start_month, period_type):
 
 def period_end(start_year, start_month, period_type):
     if period_type not in PERIODS:
-        raise Exception( "%s is not a valid period, should be %s" % (period_type, str(PERIODS.keys())) )
+        raise Exception("%s is not a valid period, should be %s" % (
+                period_type, str(PERIODS.keys()) ) )
 
-    end_year, end_month = next_period_start(start_year, start_month, period_type)
+    end_year, end_month = next_period_start(start_year, start_month,
+                                            period_type)
 
     # last step, the end date is day back from the start of the next period
     # so we get a period end like
@@ -128,23 +130,19 @@ def period_end(start_year, start_month, period_type):
 
 def generate_period_boundaries(start_year, start_month, period_type, periods):
     for i in xrange(periods):
-        yield ( date(start_year, start_month, 1),  period_end(start_year, start_month, period_type) )
-        start_year, start_month = next_period_start(start_year, start_month, period_type)
+        yield ( date(start_year, start_month, 1),
+                period_end(start_year, start_month, period_type) )
+        start_year, start_month = next_period_start(start_year, start_month,
+                                                    period_type)
 
 def account_from_path(top_account, account_path, original_path=None):
-    # mhs | debug
-    print "top_account = %s, account_path = %s, original_path = %s" % (top_account, account_path, original_path)
-    if original_path == None:
-        original_path = account_path
+    if original_path==None: original_path = account_path
     account, account_path = account_path[0], account_path[1:]
-    # mhs | debug
-    print "account = %s, account_path = %s" % (account, account_path)
 
     account = top_account.lookup_by_name(account)
-    # mhs | debug
-    print "account = " + str(account)
     if account == None:
-        raise Exception("path " + ''.join(original_path) + " could not be found")
+        raise Exception(
+            "path " + ''.join(original_path) + " could not be found")
     if len(account_path) > 0 :
         return account_from_path(account, account_path, original_path)
     else:
@@ -160,42 +158,24 @@ def main():
         print("The following example analyzes 12 months of 'Assets:Test Account' from /home/username/test.gnucash, starting in January of 2010, and shows both credits and debits")
         print("gnucash-env python account_analysis.py '/home/username/test.gnucash' 2010 1 monthly 12 debits-show credits-show Assets 'Test Account'\n")
         print("The following example analyzes 2 quarters of 'Liabilities:First Level:Second Level' from /home/username/test.gnucash, starting March 2011, and shows credits but not debits")
-        print("gnucash-env python account_analysis.py '/home/username/test.gnucash' 2011 3 quarterly 2 debits-noshow credits-show Liabilities 'First Level' 'Second Level'")
+        print("gnucash-env python account_analysis.py '/home/username/test.gnucash' 2011 3 quarterly 2 debits-noshow credits-show Liabilities 'First Level' 'Second Level")
         return
 
     try:
-        (gnucash_file, start_year, start_month, period_type, periods, debits_show, credits_show) = argv[1:8]
-        # mhs | debug
-        print "showing " + periods + " periods of " + period_type + " starting from " + start_year + "-" + start_month
-        
-        start_year, start_month, periods = [ int(blah) for blah in (start_year, start_month, periods) ]
-        
-        # mhs | debug
-        print "running: account_analysis.py"
-        print "using gnucash file: " + gnucash_file
+        (gnucash_file, start_year, start_month, period_type, periods,
+         debits_show, credits_show) = argv[1:8]
+        start_year, start_month, periods = [int(blah)
+                                            for blah in (start_year, start_month,
+                                                         periods) ]
 
         debits_show = debits_show == DEBITS_SHOW
         credits_show = credits_show == CREDITS_SHOW
 
         account_path = argv[8:]
-        # mhs | debug
-        print "account_path = " + str(account_path)
 
         gnucash_session = Session(gnucash_file, is_new=False)
-        
         root_account = gnucash_session.book.get_root_account()
-        # mhs | debug
-        print "root_account = " + root_account.GetName()
-
         account_of_interest = account_from_path(root_account, account_path)
-        # mhs | debug
-        print "account_of_interest = " + account_of_interest.GetName()
-        
-        # mhs | try getting the list of all descendant accounts
-        descendants = account_of_interest.get_descendants()
-        print "Descendants of %s:" % account_of_interest.GetName()
-        for item in descendants:
-            print "%s" % item.GetName()
 
         # a list of all the periods of interest, for each period
         # keep the start date, end date, a list to store debits and credits,
@@ -206,9 +186,10 @@ def main():
              [], # credits
              ZERO, # debits sum
              ZERO, # credits sum
+             ]
+            for start_date, end_date in generate_period_boundaries(
+                start_year, start_month, period_type, periods)
             ]
-            for start_date, end_date in generate_period_boundaries( start_year, start_month, period_type, periods )
-        ]
         # a copy of the above list with just the period start dates
         period_starts = [e[0] for e in period_list ]
     
@@ -224,8 +205,9 @@ def main():
             # ignore transactions with a date before the matching period start
             # (after subtracting 1 above start_index would be -1)
             # and after the last period_end
-            if period_index >= 0 and trans_date <= period_list[len(period_list)-1][1]:
-                
+            if period_index >= 0 and \
+                    trans_date <= period_list[len(period_list)-1][1]:
+  
                 # get the period bucket appropriate for the split in question
                 period = period_list[period_index]
 
@@ -268,15 +250,18 @@ def main():
                 for trans, split in values )
             
 
-        for start_date, end_date, debits, credits, debit_sum, credit_sum in period_list:
+        for start_date, end_date, debits, credits, debit_sum, credit_sum in \
+                period_list:
             csv_writer.writerow( (start_date, end_date, debit_sum, credit_sum) )
 
             if debits_show and len(debits) > 0:
-                csv_writer.writerow( ('DEBITS', '', '', '', 'description', 'value') )
+                csv_writer.writerow(
+                    ('DEBITS', '', '', '', 'description', 'value') )
                 csv_writer.writerows( generate_detail_rows(debits) )
                 csv_writer.writerow( () )
             if credits_show and len(credits) > 0:
-                csv_writer.writerow( ('CREDITS', '', '', '', 'description', 'value') )
+                csv_writer.writerow(
+                    ('CREDITS', '', '', '', 'description', 'value') )
                 csv_writer.writerows( generate_detail_rows(credits) )
                 csv_writer.writerow( () )
 
@@ -285,7 +270,9 @@ def main():
     except:
         if "gnucash_session" in locals():
             gnucash_session.end()
+
         raise
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()
+
+
