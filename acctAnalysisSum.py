@@ -147,7 +147,48 @@ def account_from_path(top_account, account_path, original_path=None):
     else:
         return account
     
+def getSplits(acct, period_starts, period_list):
+    # insert and add all splits in the periods of interest
+    for split in acct.GetSplitList():
+        trans = split.parent
+        trans_date = date.fromtimestamp(trans.GetDate())
+
+        # use binary search to find the period that starts before or on the transaction date
+        period_index = bisect_right( period_starts, trans_date ) - 1
     
+        # ignore transactions with a date before the matching period start
+        # (after subtracting 1 above start_index would be -1)
+        # and after the last period_end
+        if period_index >= 0 and trans_date <= period_list[len(period_list)-1][1]:
+            
+            # get the period bucket appropriate for the split in question
+            period = period_list[period_index]
+
+            # more specifically, we'd expect the transaction date to be on or after the period start
+            # and before or on the period end, assuming the binary search (bisect_right)
+            # assumptions from above are right...
+            #
+            # in other words, we assert our use of binary search
+            # and the filtered results from the above if provide all the protection we need
+            assert( trans_date>= period[0] and trans_date <= period[1] )
+           
+            split_amount = gnc_numeric_to_python_Decimal( split.GetAmount() )
+
+            # if the amount is negative, this is a credit
+            if split_amount < ZERO:
+                debit_credit_offset = 1
+            # else a debit
+            else:
+                debit_credit_offset = 0
+
+            # store the debit or credit Split with its transaction, using the above offset to get in the right bucket
+            #
+            # if we wanted to be really cool we'd keep the transactions
+            period[2+debit_credit_offset].append( (trans, split) )
+
+            # add the debit or credit to the sum, using the above offset to get in the right bucket
+            period[4+debit_credit_offset] += split_amount
+   
 def main():
     
     if len(argv) < 10:
@@ -190,9 +231,6 @@ def main():
         # mhs | debug
         print "account_of_interest = " + account_of_interest.GetName()
         
-        # mhs | calculate the sums of debits and credits for EACH sub-account
-        #       but just keep the overall total
-        
         # a list of all the periods of interest
         # for each period keep the start date, end date, a list to store debits and credits,
         # and sums for tracking the sum of all debits and sum of all credits
@@ -210,65 +248,31 @@ def main():
         
         # mhs | get the list of all descendant accounts
         descendants = account_of_interest.get_descendants()
-        print "Descendants of %s:" % account_of_interest.GetName()
-        for subAcct in descendants:
-            print "%s:" % subAcct.GetName()
-
-            # insert and add all splits in the periods of interest
-            for split in subAcct.GetSplitList():
-                trans = split.parent
-                trans_date = date.fromtimestamp(trans.GetDate())
-    
-                # use binary search to find the period that starts before or on the transaction date
-                period_index = bisect_right( period_starts, trans_date ) - 1
-            
-                # ignore transactions with a date before the matching period start
-                # (after subtracting 1 above start_index would be -1)
-                # and after the last period_end
-                if period_index >= 0 and trans_date <= period_list[len(period_list)-1][1]:
-                    
-                    # get the period bucket appropriate for the split in question
-                    period = period_list[period_index]
-    
-                    # more specifically, we'd expect the transaction date to be on or after the period start
-                    # and before or on the period end, assuming the binary search (bisect_right)
-                    # assumptions from above are right...
-                    #
-                    # in other words, we assert our use of binary search
-                    # and the filtered results from the above if provide all the protection we need
-                    assert( trans_date>= period[0] and trans_date <= period[1] )
-                   
-                    split_amount = gnc_numeric_to_python_Decimal( split.GetAmount() )
-    
-                    # if the amount is negative, this is a credit
-                    if split_amount < ZERO:
-                        debit_credit_offset = 1
-                    # else a debit
-                    else:
-                        debit_credit_offset = 0
-    
-                    # store the debit or credit Split with its transaction, using the above offset to get in the right bucket
-                    #
-                    # if we wanted to be really cool we'd keep the transactions
-                    period[2+debit_credit_offset].append( (trans, split) )
         
-                    # add the debit or credit to the sum, using the above offset to get in the right bucket
-                    period[4+debit_credit_offset] += split_amount
-    
+        if len(descendants) == 0:
+            # mhs | account has no descendants so just calculate the splits directly
+            getSplits(account_of_interest, period_starts, period_list)
+        else:
+            # mhs | calculate the sums of debits and credits for EACH sub-account but just keep the overall total
+            print "Descendants of %s:" % account_of_interest.GetName()
+            for subAcct in descendants:
+                print "%s:" % subAcct.GetName()
+                getSplits(subAcct, period_starts, period_list)
+        
         # write out the column headers
         csv_writer = csv.writer(stdout)
         csv_writer.writerow( ('period start', 'period end', 'debits', 'credits') )
-    
+        
         def generate_detail_rows(values):
             return (
                 ('', '', '', '', trans.GetDescription(),
                  gnc_numeric_to_python_Decimal(split.GetAmount()))
                 for trans, split in values )
-            
+        
         # write out the overall totals for the account of interest
         for start_date, end_date, debits, creds, debit_sum, credit_sum in period_list:
             csv_writer.writerow( (start_date, end_date, debit_sum, credit_sum) )
-
+            
             # write the details for each credit or debit if requested on the command line
             if debits_show and len(debits) > 0:
                 csv_writer.writerow( ('DEBITS', '', '', '', 'description', 'value') )
@@ -278,7 +282,7 @@ def main():
                 csv_writer.writerow( ('CREDITS', '', '', '', 'description', 'value') )
                 csv_writer.writerows( generate_detail_rows(creds) )
                 csv_writer.writerow( () )
-
+        
         # no save needed, we're just reading..
         gnucash_session.end()
     except:
