@@ -20,7 +20,7 @@
 # Boston, MA  02110-1301,  USA       gnu@gnu.org
 #
 # @author Mark Jenkins, ParIT Worker Co-operative <mark@parit.ca>
-# @revised Mark Sattolo <epistemik@gmail.com> 2018-05
+# @revised Mark Sattolo <epistemik@gmail.com>
 
 
 from sys import argv, stdout
@@ -81,7 +81,7 @@ def gnc_numeric_to_python_Decimal(numeric):
     copy = GncNumeric(numeric.num(), numeric.denom())
     result = copy.to_decimal(None)
     if not result:
-        raise Exception("gnc numeric value %s can't be converted to deciaml" % copy.to_string() )
+        raise Exception("gnc numeric value %s can't be converted to decimal" % copy.to_string() )
     digit_tuple = tuple( int(char)
                          for char in str(copy.num())
                          if char != '-' )
@@ -103,7 +103,7 @@ def next_period_start(start_year, start_month, period_type):
     # the really cool part is that this whole thing is implemented without
     # any branching; if end_month > NUM_MONTHS
     #
-    # A the super nice thing is that you can add all kinds of period lengths to PERIODS
+    # Another super nice thing is that you can add all kinds of period lengths to PERIODS
     end_year = start_year + ( (end_month-1) / NUM_MONTHS )
     end_month = ( (end_month-1) % NUM_MONTHS ) + 1
 
@@ -146,48 +146,46 @@ def account_from_path(top_account, account_path, original_path=None):
         return account_from_path(account, account_path, original_path)
     else:
         return account
-
-
+    
+    
 def main():
-
+    
     if len(argv) < 10:
-        print('NOT ENOUGH parameters!')
-        print('usage: acctAnalysisSum.py {book url} {start year} {start month, numeric} {period type: monthly, quarterly, yearly, etc}')
-        print(                          '{number of periods to show, from start year and month} ')
-        print(                          '{whether to show debits: debits-show for true, all other values false} ')
-        print(                          '{whether to show credits: credits-show for true, all other values false} ')
-        print(                          '{space separated account path, as many nested levels as desired} ')
-        print('examples:\n')
-        print("The following example analyzes 12 months of 'Assets:Test Account' from /home/username/test.gnucash, starting in January of 2010, and shows both credits and debits")
-        print("gnucash-env python account_analysis.py '/home/username/test.gnucash' 2010 1 monthly 12 debits-show credits-show Assets 'Test Account'\n")
-        print("The following example analyzes 2 quarters of 'Liabilities:First Level:Second Level' from /home/username/test.gnucash, starting March 2011, and shows credits but not debits")
-        print("gnucash-env python account_analysis.py '/home/username/test.gnucash' 2011 3 quarterly 2 debits-noshow credits-show Liabilities 'First Level' 'Second Level'")
+        print("NOT ENOUGH parameters!")
+        print("usage: {0} <book url> <start year> <start month, numeric> <period type: monthly, quarterly, yearly, etc>".format(argv[0]))
+        print("\t\t\t <number of periods to show, from start year and month> <whether to show debits: debits-show for true, all other values false>")
+        print("\t\t\t <whether to show credits: credits-show for true, all other values false> <space separated account path, as many nested levels as desired>")
+        print("examples:\n")
+        print("The following example analyzes 12 months of Assets:Test Account from /home/username/test.gnucash, starting in January of 2010, and shows both credits and debits")
+        print("{0} /home/username/test.gnucash 2010 1 monthly 12 debits-show credits-show Assets Test Account\n".format(argv[0]))
+        print("The following example analyzes 2 quarters of Liabilities:First Level:Second Level from /home/username/test.gnucash, starting March 2011, and shows credits but not debits")
+        print("{0} /home/username/test.gnucash 2011 3 quarterly 2 debits-noshow credits-show Liabilities <First Level> <Second Level>".format(argv[0]))
         return
-
+    
     try:
         (gnucash_file, start_year, start_month, period_type, periods, debits_show, credits_show) = argv[1:8]
         # mhs | debug
         print "showing " + periods + " periods of " + period_type + " starting from " + start_year + "-" + start_month
-
+        
         start_year, start_month, periods = [ int(blah) for blah in (start_year, start_month, periods) ]
-
+        
         # mhs | debug
-        print "running: account_analysis.py"
+        print "running: " + argv[0]
         print "using gnucash file: " + gnucash_file
-
+        
         debits_show = debits_show == DEBITS_SHOW
         credits_show = credits_show == CREDITS_SHOW
-
+        
         account_path = argv[8:]
         # mhs | debug
         print "account_path = " + str(account_path)
-
+        
         gnucash_session = Session(gnucash_file, is_new=False)
         
         root_account = gnucash_session.book.get_root_account()
         # mhs | debug
-        print "root_account = " + root_account.GetName()
-
+#         print "root_account = " + root_account.GetName()
+        
         account_of_interest = account_from_path(root_account, account_path)
         # mhs | debug
         print "account_of_interest = " + account_of_interest.GetName()
@@ -214,7 +212,7 @@ def main():
         descendants = account_of_interest.get_descendants()
         print "Descendants of %s:" % account_of_interest.GetName()
         for subAcct in descendants:
-#             print "%s:" % subAcct.GetName()
+            print "%s:" % subAcct.GetName()
 
             # insert and add all splits in the periods of interest
             for split in subAcct.GetSplitList():
