@@ -22,7 +22,6 @@
 # @author Mark Jenkins, ParIT Worker Co-operative <mark@parit.ca>
 # @revised Mark Sattolo <epistemik@gmail.com>
 
-
 from sys import argv, stdout
 from datetime import date, timedelta
 from bisect import bisect_right
@@ -32,27 +31,28 @@ import csv
 
 from gnucash import Session, GncNumeric
 
-# Invoke this script like the following example
-# $ gnucash-env python account_analysis.py gnucash_file.gnucash \
-#   2010 1 monthly 12 debits-show credits-show Assets 'Test Account'
-#
-# That will do an analysis on the account 'Assets:Test Account' from
-# gnucash_file.xac, all of the debits and all of the credits will be shown
-# and summed on for 12 monthly periods starting from January (1st month) 2010
-# 
-# if you just want to see the credit and debit sums for each period, use
-# the debits-noshow and credits-noshow argument
-#
-# The output goes to stdout and is in csv format.
-#
-# Account path arguments are space separated, so you need to quote parts of
-# the account path with spaces in them
-#
-# available period types are monthly quarterly and yearly
-#
-# At the moment this script only supports GnuCash files of the sqllite3 type
-# its an easy edit to switch to xml: etc...
+'''
+Invoke this script like the following example
+$ gnucash-env python account_analysis.py gnucash_file.gnucash \
+  2010 1 monthly 12 debits-show credits-show Assets 'Test Account'
 
+That will do an analysis on the account 'Assets:Test Account' from
+gnucash_file.xac, all of the debits and all of the credits will be shown
+and summed on for 12 monthly periods starting from January (1st month) 2010
+ 
+if you just want to see the credit and debit sums for each period, use
+the debits-noshow and credits-noshow argument
+
+The output goes to stdout and is in csv format.
+
+Account path arguments are space separated, so you need to quote parts of
+the account path with spaces in them
+
+available period types are monthly quarterly and yearly
+
+At the moment this script only supports GnuCash files of the sqllite3 type
+its an easy edit to switch to xml: etc...
+'''
 
 # a dictionary with a period name as key, and number of months in that
 # kind of period as the value
@@ -90,7 +90,6 @@ def gnc_numeric_to_python_Decimal(numeric):
     assert( (10 ** exponent) == denominator )
     return Decimal( (sign, digit_tuple, -exponent) )
     
-
 def next_period_start(start_year, start_month, period_type):
     # add numbers of months for the period length
     end_month = start_month + PERIODS[period_type]
@@ -109,7 +108,6 @@ def next_period_start(start_year, start_month, period_type):
 
     return end_year, end_month
     
-
 def period_end(start_year, start_month, period_type):
     if period_type not in PERIODS:
         raise Exception( "%s is not a valid period, should be %s" % (period_type, str(PERIODS.keys())) )
@@ -121,25 +119,23 @@ def period_end(start_year, start_month, period_type):
     # 2010-03-31 for period starting 2010-01 instead of 2010-04-01
     return date(end_year, end_month, 1) - ONE_DAY
     
-
 def generate_period_boundaries(start_year, start_month, period_type, periods):
     for i in xrange(periods):
         yield( date(start_year, start_month, 1),  period_end(start_year, start_month, period_type) )
         start_year, start_month = next_period_start(start_year, start_month, period_type)
 
-
 def account_from_path(top_account, account_path, original_path=None):
     # mhs | debug
-#     print "top_account = %s, account_path = %s, original_path = %s" % (top_account, account_path, original_path)
+#     print( "top_account = %s, account_path = %s, original_path = %s" % (top_account, account_path, original_path) )
     if original_path == None:
         original_path = account_path
     account, account_path = account_path[0], account_path[1:]
     # mhs | debug
-#     print "account = %s, account_path = %s" % (account, account_path)
+#     print( "account = %s, account_path = %s" % (account, account_path) )
 
     account = top_account.lookup_by_name(account)
     # mhs | debug
-#     print "account = " + str(account)
+#     print( "account = " + str(account) )
     if account == None:
         raise Exception("path " + ''.join(original_path) + " could not be found")
     if len(account_path) > 0 :
@@ -206,30 +202,30 @@ def main():
     try:
         (gnucash_file, start_year, start_month, period_type, periods, debits_show, credits_show) = argv[1:8]
         # mhs | debug
-        print "showing " + periods + " periods of " + period_type + " starting from " + start_year + "-" + start_month
+        print( "showing " + periods + " periods of " + period_type + " starting from " + start_year + "-" + start_month )
         
         start_year, start_month, periods = [ int(blah) for blah in (start_year, start_month, periods) ]
         
         # mhs | debug
-        print "running: " + argv[0]
-        print "using gnucash file: " + gnucash_file
+        print( "running: " + argv[0] )
+        print( "using gnucash file: " + gnucash_file )
         
         debits_show = debits_show == DEBITS_SHOW
         credits_show = credits_show == CREDITS_SHOW
         
         account_path = argv[8:]
         # mhs | debug
-        print "account_path = " + str(account_path)
+        print( "account_path = " + str(account_path) )
         
         gnucash_session = Session(gnucash_file, is_new=False)
         
         root_account = gnucash_session.book.get_root_account()
         # mhs | debug
-#         print "root_account = " + root_account.GetName()
+#         print( "root_account = " + root_account.GetName() )
         
         account_of_interest = account_from_path(root_account, account_path)
         # mhs | debug
-        print "account_of_interest = " + account_of_interest.GetName()
+        print( "account_of_interest = " + account_of_interest.GetName() )
         
         # a list of all the periods of interest
         # for each period keep the start date, end date, a list to store debits and credits,
@@ -254,9 +250,9 @@ def main():
             getSplits(account_of_interest, period_starts, period_list)
         else:
             # mhs | calculate the sums of debits and credits for EACH sub-account but just keep the overall total
-            print "Descendants of %s:" % account_of_interest.GetName()
+            print( "Descendants of %s:" % account_of_interest.GetName() )
             for subAcct in descendants:
-                print "%s:" % subAcct.GetName()
+                print( "%s" % subAcct.GetName() )
                 getSplits(subAcct, period_starts, period_list)
         
         # write out the column headers
