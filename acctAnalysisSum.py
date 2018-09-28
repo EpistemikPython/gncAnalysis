@@ -23,7 +23,7 @@
 # @revised Mark Sattolo <epistemik@gmail.com>
 
 from sys import argv, stdout
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from bisect import bisect_right
 from decimal import Decimal
 from math import log10
@@ -56,20 +56,17 @@ its an easy edit to switch to xml: etc...
 
 # a dictionary with a period name as key, and number of months in that
 # kind of period as the value
-PERIODS = {"monthly": 1,
+PERIODS = {"monthly":   1,
            "quarterly": 3,
            # mhs | add thirdly, halfly, biyearly
-           "thirdly": 4,
-           "halfly": 6,
-           "yearly": 12,
+           "thirdly":   4,
+           "halfly":    6,
+           "yearly":   12,
            "biyearly": 24 }
 
 NUM_MONTHS = 12
-
 ONE_DAY = timedelta(days=1)
-
 DEBITS_SHOW, CREDITS_SHOW = ("debits-show", "credits-show")
-
 ZERO = Decimal(0)
 
 def gnc_numeric_to_python_Decimal(numeric):
@@ -78,13 +75,13 @@ def gnc_numeric_to_python_Decimal(numeric):
         sign = 1
     else:
         sign = 0
+        
     copy = GncNumeric(numeric.num(), numeric.denom())
     result = copy.to_decimal(None)
     if not result:
         raise Exception("gnc numeric value %s can't be converted to decimal" % copy.to_string() )
-    digit_tuple = tuple( int(char)
-                         for char in str(copy.num())
-                         if char != '-' )
+    
+    digit_tuple = tuple( int(char) for char in str(copy.num()) if char != '-' )
     denominator = copy.denom()
     exponent = int(log10(denominator))
     assert( (10 ** exponent) == denominator )
@@ -207,6 +204,7 @@ def main():
         start_year, start_month, periods = [ int(blah) for blah in (start_year, start_month, periods) ]
         
         # mhs | debug
+        print( "run-time: " + str(datetime.now()) )
         print( "running: " + argv[0] )
         print( "using gnucash file: " + gnucash_file )
         
