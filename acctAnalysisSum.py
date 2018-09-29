@@ -134,7 +134,7 @@ def account_from_path(top_account, account_path, original_path=None):
     # mhs | debug
 #     print( "account = " + str(account) )
     if account == None:
-        raise Exception("path " + ''.join(original_path) + " could not be found")
+        raise Exception("path " + str(original_path) + " could not be found")
     if len(account_path) > 0 :
         return account_from_path(account, account_path, original_path)
     else:
@@ -234,6 +234,7 @@ def main():
              [], # credits
              ZERO, # debits sum
              ZERO, # credits sum
+             ZERO  # TOTAL
             ]
             for start_date, end_date in generate_period_boundaries( start_year, start_month, period_type, periods )
         ]
@@ -255,7 +256,7 @@ def main():
         
         # write out the column headers
         csv_writer = csv.writer(stdout)
-        csv_writer.writerow( ('period start', 'period end', 'debits', 'credits') )
+        csv_writer.writerow( ('period start', 'period end', 'debits', 'credits', 'TOTAL') )
         
         def generate_detail_rows(values):
             return (
@@ -264,8 +265,8 @@ def main():
                 for trans, split in values )
         
         # write out the overall totals for the account of interest
-        for start_date, end_date, debits, creds, debit_sum, credit_sum in period_list:
-            csv_writer.writerow( (start_date, end_date, debit_sum, credit_sum) )
+        for start_date, end_date, debits, creds, debit_sum, credit_sum, total in period_list:
+            csv_writer.writerow( (start_date, end_date, debit_sum, credit_sum, (debit_sum + credit_sum)) )
             
             # write the details for each credit or debit if requested on the command line
             if debits_show and len(debits) > 0:
