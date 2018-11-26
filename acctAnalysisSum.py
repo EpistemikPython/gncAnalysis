@@ -108,9 +108,9 @@ def next_period_start(start_year, start_month, period_type):
 def period_end(start_year, start_month, period_type):
     if period_type not in PERIODS:
         raise Exception( "%s is not a valid period, should be %s" % (period_type, str(PERIODS.keys())) )
-
+    
     end_year, end_month = next_period_start(start_year, start_month, period_type)
-
+    
     # last step, the end date is day back from the start of the next period
     # so we get a period end like
     # 2010-03-31 for period starting 2010-01 instead of 2010-04-01
@@ -129,7 +129,7 @@ def account_from_path(top_account, account_path, original_path=None):
     account, account_path = account_path[0], account_path[1:]
     # mhs | debug
 #     print( "account = %s, account_path = %s" % (account, account_path) )
-
+    
     account = top_account.lookup_by_name(account)
     # mhs | debug
 #     print( "account = " + str(account) )
@@ -145,10 +145,10 @@ def getSplits(acct, period_starts, period_list):
     for split in acct.GetSplitList():
         trans = split.parent
         trans_date = date.fromtimestamp(trans.GetDate())
-
+        
         # use binary search to find the period that starts before or on the transaction date
         period_index = bisect_right( period_starts, trans_date ) - 1
-    
+        
         # ignore transactions with a date before the matching period start
         # (after subtracting 1 above start_index would be -1)
         # and after the last period_end
@@ -156,7 +156,7 @@ def getSplits(acct, period_starts, period_list):
             
             # get the period bucket appropriate for the split in question
             period = period_list[period_index]
-
+            
             # more specifically, we'd expect the transaction date to be on or after the period start
             # and before or on the period end, assuming the binary search (bisect_right)
             # assumptions from above are right...
@@ -164,21 +164,21 @@ def getSplits(acct, period_starts, period_list):
             # in other words, we assert our use of binary search
             # and the filtered results from the above if provide all the protection we need
             assert( trans_date>= period[0] and trans_date <= period[1] )
-           
+            
             split_amount = gnc_numeric_to_python_Decimal( split.GetAmount() )
-
+            
             # if the amount is negative, this is a credit
             if split_amount < ZERO:
                 debit_credit_offset = 1
             # else a debit
             else:
                 debit_credit_offset = 0
-
+                
             # store the debit or credit Split with its transaction, using the above offset to get in the right bucket
             #
             # if we wanted to be really cool we'd keep the transactions
             period[2+debit_credit_offset].append( (trans, split) )
-
+            
             # add the debit or credit to the sum, using the above offset to get in the right bucket
             period[4+debit_credit_offset] += split_amount
    

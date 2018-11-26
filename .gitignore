@@ -2,4 +2,6 @@
 !.gitignore
 *.gnc
 /logs
+/bindings
+/examples
 
