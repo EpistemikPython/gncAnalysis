@@ -29,7 +29,8 @@
 
 from sys import argv, exit
 
-from gnucash import Session, Transaction, Split, Account, GncNumeric, GncCommodity, ACCT_TYPE_BANK
+from gnucash import Session, Transaction, Split, Account, GncNumeric, GncCommodity, ACCT_TYPE_BANK, GUID
+from gnucash.gnucash_core_c import guid_new_return, guid_to_string
 
 # argv[1] should be the path to an existing gnucash file/database
 # for tx file, simply pass the pathname, for tx database you can use
@@ -40,74 +41,85 @@ from gnucash import Session, Transaction, Split, Account, GncNumeric, GncCommodi
 # You should try it out with tx gnucash file with tranding accounts enabled
 # and trading accounts disabled
 
-if len(argv) < 5:    
-    print('not enough parameters!')
-    print('usage: createTx.py <gnucash file> <acct1> <acct2> <amount>')
-    print('examples:')
-    print("gnucash-env python createTx.py 'HouseHold.gnucash' 'dining' 'CIBC Visa' '9.95'")
+if len(argv) < 6:    
+    print("NOT ENOUGH parameters!")
+    print("usage: createTx.py <gnucash file> <acct1> <acct2> <amount> <descr>")
+    print("example:")
+    print("[gnucash-env] [python] createTx.py 'HouseHold.gnucash' 'Dining' 'CIBC Visa' '1313' 'Test'|'Prod'")
     exit()
-
+    
 try:
     session = Session(argv[1])
     book = session.book
-
+    
     root = book.get_root_account()
     root.get_instance()
     
-    commod_tab = session.book.get_table()
-    CAD = commod_tab.lookup("ISO4217","CAD")
-    USD = commod_tab.lookup("ISO4217","USD")
+    commod_tab = book.get_table()
+    session.save()
     
-    amount = argv[4]
+    CAD = commod_tab.lookup("ISO4217", "CAD")
+#     USD = commod_tab.lookup("ISO4217","USD")
+    
+    amount = int(argv[4])
+    print("amount = {0}".format(amount))
+    amount2 = amount * (-1)
+    print("amount2 = {0}".format(amount2))
+    
+#     print("new guid = {0}".format(guid_to_string(guid_new_return())))
+    
     acct1_name = argv[2]
     acct2_name = argv[3]
     acct1 = root.lookup_by_name(acct1_name)
-    acct1 = root.lookup_by_name(acct2_name)
+    acct2 = root.lookup_by_name(acct2_name)
 #     acct1 = root.lookup_by_code(acct1_code)
     
-    acct1 = Account(book)
-    acct2 = Account(book)
-    root.append_child(acct1)
-    root.append_child(acct2)
+#     type_acct1 = acct1.GetTypeStr()
+#     type_acct2 = acct2.GetTypeStr()
     
-    acct1.SetCommodity(CAD)
-    acct1.SetName("blahblah")
-    acct1.SetType(ACCT_TYPE_BANK)
-    acct = acct1.GetTypeStr()
-    
-    acct2.SetCommodity(CAD)
-    acct2.SetName("blahblahsdfs ")
-    acct2.SetType(3)
-    acct2 = acct2.GetTypeStr()
-
+    # create a new Tx
     tx = Transaction(book)
-    tx.BeginEdit()
+    # gets a guid on construction
+    print("tx guid = {0}".format(tx.GetGUID().to_string()))
 
-    s = Split(book)
-    s.SetParent(tx)
+    tx.BeginEdit()
+    
+    # create two splits for the Tx
+    s1 = Split(book)
+    s1.SetParent(tx)
+    # gets a guid on construction
+    print("s1 guid = {0}".format(s1.GetGUID().to_string()))
     s2 = Split(book)
     s2.SetParent(tx)
-
+    # gets a guid on construction
+    print("s2 guid = {0}".format(s2.GetGUID().to_string()))
+    
     tx.SetCurrency(CAD)
-    s.SetAccount(acct1)
-    s.SetValue(GncNumeric(2))
-    s.SetAmount(GncNumeric(2))
-
+    tx.SetDate(13, 2, 2013)
+    tx.SetDescription(argv[5])
+    tx.SetNotes("Python {0}".format(argv[0]))
+#     tx: set action ?
+    
+    # set the account and amount of split1
+    s1.SetAccount(acct1)
+    s1.SetValue(GncNumeric(amount, 100))
+#     s1.SetAmount(GncNumeric(amount, 100))
+    
+    # set the account and amount of split2
     s2.SetAccount(acct2)
-    s2.SetValue(GncNumeric(4))
-    s2.SetAmount(GncNumeric(4))
-    print('overall imbalance', tx.GetImbalanceValue().to_string())
-
-    print('per-currency imbalances')
-    imbalance_list = tx.GetImbalance()
-    for (commod, value) in imbalance_list:
-        print(value.to_string(), commod.get_mnemonic())
-
-    tx.CommitEdit()
-
+    s2.SetValue(GncNumeric(amount2, 100))
+#     s2.SetAmount(GncNumeric(amount2, 100))
+    
+    print("Tx imbalance = {0}".format(tx.GetImbalanceValue().to_string()))
+    
+    if argv[5].upper() != "PROD":
+        tx.RollbackEdit()
+    else:
+        tx.CommitEdit()
+        session.save()
 
     session.end()
-    session.destroy()
+#     session.destroy()
 except:
     if "session" in locals():
         session.end()

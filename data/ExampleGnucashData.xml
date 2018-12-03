@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<gnc-v2
+     xmlns:gnc="http://www.gnucash.org/XML/gnc"
+     xmlns:act="http://www.gnucash.org/XML/act"
+     xmlns:book="http://www.gnucash.org/XML/book"
+     xmlns:cd="http://www.gnucash.org/XML/cd"
+     xmlns:cmdty="http://www.gnucash.org/XML/cmdty"
+     xmlns:price="http://www.gnucash.org/XML/price"
+     xmlns:slot="http://www.gnucash.org/XML/slot"
+     xmlns:split="http://www.gnucash.org/XML/split"
+     xmlns:sx="http://www.gnucash.org/XML/sx"
+     xmlns:trn="http://www.gnucash.org/XML/trn"
+     xmlns:ts="http://www.gnucash.org/XML/ts"
+     xmlns:fs="http://www.gnucash.org/XML/fs"
+     xmlns:bgt="http://www.gnucash.org/XML/bgt"
+     xmlns:recurrence="http://www.gnucash.org/XML/recurrence"
+     xmlns:lot="http://www.gnucash.org/XML/lot"
+     xmlns:addr="http://www.gnucash.org/XML/addr"
+     xmlns:owner="http://www.gnucash.org/XML/owner"
+     xmlns:billterm="http://www.gnucash.org/XML/billterm"
+     xmlns:bt-days="http://www.gnucash.org/XML/bt-days"
+     xmlns:bt-prox="http://www.gnucash.org/XML/bt-prox"
+     xmlns:cust="http://www.gnucash.org/XML/cust"
+     xmlns:employee="http://www.gnucash.org/XML/employee"
+     xmlns:entry="http://www.gnucash.org/XML/entry"
+     xmlns:invoice="http://www.gnucash.org/XML/invoice"
+     xmlns:job="http://www.gnucash.org/XML/job"
+     xmlns:order="http://www.gnucash.org/XML/order"
+     xmlns:taxtable="http://www.gnucash.org/XML/taxtable"
+     xmlns:tte="http://www.gnucash.org/XML/tte"
+     xmlns:vendor="http://www.gnucash.org/XML/vendor" >
+
+<!-- Example Credit Card Account
+===================================== -->
+
+<gnc:account version="2.0.0">
+  <act:name>CIBC Visa</act:name>
+  <act:id type="guid">6b6c8d414f661ae54bbc2087e610d5b2</act:id>
+  <act:type>CREDIT</act:type>
+  <act:commodity>
+    <cmdty:space>ISO4217</cmdty:space>
+    <cmdty:id>CAD</cmdty:id>
+  </act:commodity>
+  <act:commodity-scu>100</act:commodity-scu>
+  <act:code> 4500 6550 1308 7406 / 727</act:code>
+  <act:description>Dividend Platinum 09/19  end 17th</act:description>
+  <act:slots>
+    <slot>
+      <slot:key>color</slot:key>
+      <slot:value type="string">#ecec9fde7777</slot:value>
+    </slot>
+    <slot>
+      <slot:key>notes</slot:key>
+      <slot:value type="string">CIBC changed Driver's Edge MC to Dividend Platinum Visa 7-7-2016
+--------------
+Lulu:  4500 6550 1308 7414 / 332
+Tom:  4500 6550 1308 7422 / 271</slot:value>
+    </slot>
+    <slot>
+      <slot:key>reconcile-info</slot:key>
+      <slot:value type="frame">
+        <slot>
+          <slot:key>include-children</slot:key>
+          <slot:value type="integer">0</slot:value>
+        </slot>
+        <slot>
+          <slot:key>last-date</slot:key>
+          <slot:value type="integer">1524023999</slot:value>
+        </slot>
+        <slot>
+          <slot:key>last-interval</slot:key>
+          <slot:value type="frame">
+            <slot>
+              <slot:key>days</slot:key>
+              <slot:value type="integer">0</slot:value>
+            </slot>
+            <slot>
+              <slot:key>months</slot:key>
+              <slot:value type="integer">1</slot:value>
+            </slot>
+          </slot:value>
+        </slot>
+      </slot:value>
+    </slot>
+  </act:slots>
+  <act:parent type="guid">50494857bf94dd785f0a278c4c7ae73b</act:parent>
+</gnc:account>
+
+<!-- Example Expense Account
+================================= -->
+
+<gnc:account version="2.0.0">
+  <act:name>C&amp;F_ML</act:name>
+  <act:id type="guid">81f9cbffd47e667a075d4675e0ec9bf8</act:id>
+  <act:type>EXPENSE</act:type>
+  <act:commodity>
+    <cmdty:space>ISO4217</cmdty:space>
+    <cmdty:id>CAD</cmdty:id>
+  </act:commodity>
+  <act:commodity-scu>100</act:commodity-scu>
+  <act:slots>
+    <slot>
+      <slot:key>color</slot:key>
+      <slot:value type="string">#f1f1e4e46666</slot:value>
+    </slot>
+    <slot>
+      <slot:key>placeholder</slot:key>
+      <slot:value type="string">true</slot:value>
+    </slot>
+    <slot>
+      <slot:key>reconcile-info</slot:key>
+      <slot:value type="frame">
+        <slot>
+          <slot:key>include-children</slot:key>
+          <slot:value type="integer">0</slot:value>
+        </slot>
+        <slot>
+          <slot:key>last-date</slot:key>
+          <slot:value type="integer">1503892799</slot:value>
+        </slot>
+        <slot>
+          <slot:key>last-interval</slot:key>
+          <slot:value type="frame">
+            <slot>
+              <slot:key>days</slot:key>
+              <slot:value type="integer">0</slot:value>
+            </slot>
+            <slot>
+              <slot:key>months</slot:key>
+              <slot:value type="integer">3</slot:value>
+            </slot>
+          </slot:value>
+        </slot>
+      </slot:value>
+    </slot>
+  </act:slots>
+  <act:parent type="guid">f1342c8d139e74c2c6b2076e819daddd</act:parent>
+</gnc:account>
+
+<!-- Example Expense-CC Transaction
+======================================= -->
+
+<gnc:transaction version="2.0.0">
+  <trn:id type="guid">11952d95904e0df32bbdacdb27c7787b</trn:id>
+  <trn:currency>
+    <cmdty:space>ISO4217</cmdty:space>
+    <cmdty:id>CAD</cmdty:id>
+  </trn:currency>
+  <trn:date-posted>
+    <ts:date>2008-04-06 00:00:00 -0400</ts:date>
+  </trn:date-posted>
+  <trn:date-entered>
+    <ts:date>2010-11-14 13:32:35 -0500</ts:date>
+    <ts:ns>314206000</ts:ns>
+  </trn:date-entered>
+  <trn:description>Brio Bodywear</trn:description>
+  <trn:slots>
+    <slot>
+      <slot:key>notes</slot:key>
+      <slot:value type="string">leotard</slot:value>
+    </slot>
+  </trn:slots>
+  <trn:splits>
+    <trn:split>
+      <split:id type="guid">a3f67d0dabd86d2f6f6544fc3d72bb03</split:id>
+      <split:reconciled-state>y</split:reconciled-state>
+      <split:reconcile-date>
+        <ts:date>2013-02-03 23:59:59 -0500</ts:date>
+      </split:reconcile-date>
+      <split:value>3385/100</split:value>
+      <split:quantity>3385/100</split:quantity>
+      <split:account type="guid">81f9cbffd47e667a075d4675e0ec9bf8</split:account>
+    </trn:split>
+    <trn:split>
+      <split:id type="guid">4fb559967a7e28e71b4dcc116075b9a5</split:id>
+      <split:reconciled-state>y</split:reconciled-state>
+      <split:value>-3385/100</split:value>
+      <split:quantity>-3385/100</split:quantity>
+      <split:account type="guid">6b6c8d414f661ae54bbc2087e610d5b2</split:account>
+    </trn:split>
+  </trn:splits>
+</gnc:transaction>
+
+<!--************************************************************************************************************************-->
+
+<!--  Example Income Account
+================================= -->
+
+<gnc:account version="2.0.0">
+  <act:name>OPEN</act:name>
+  <act:id type="guid">692f41056c505b1700205920b0d93899</act:id>
+  <act:type>INCOME</act:type>
+  <act:commodity>
+    <cmdty:space>ISO4217</cmdty:space>
+    <cmdty:id>CAD</cmdty:id>
+  </act:commodity>
+  <act:commodity-scu>100</act:commodity-scu>
+  <act:description>OPEN account distributions</act:description>
+  <act:slots>
+    <slot>
+      <slot:key>color</slot:key>
+      <slot:value type="string">#d9d98b8be0e0</slot:value>
+    </slot>
+    <slot>
+      <slot:key>reconcile-info</slot:key>
+      <slot:value type="frame">
+        <slot>
+          <slot:key>include-children</slot:key>
+          <slot:value type="integer">0</slot:value>
+        </slot>
+        <slot>
+          <slot:key>last-date</slot:key>
+          <slot:value type="integer">1514782799</slot:value>
+        </slot>
+        <slot>
+          <slot:key>last-interval</slot:key>
+          <slot:value type="frame">
+            <slot>
+              <slot:key>days</slot:key>
+              <slot:value type="integer">0</slot:value>
+            </slot>
+            <slot>
+              <slot:key>months</slot:key>
+              <slot:value type="integer">6</slot:value>
+            </slot>
+          </slot:value>
+        </slot>
+      </slot:value>
+    </slot>
+  </act:slots>
+  <act:parent type="guid">928f56d526bf501c511803742f911a30</act:parent>
+</gnc:account>
+
+<!-- Example Mutual Fund Account
+==================================== -->
+
+<gnc:account version="2.0.0">
+  <act:name>Sig-DY2-11461_ll</act:name>
+  <act:id type="guid">5e6c98457ccf2b84435413d5a7433eab</act:id>
+  <act:type>MUTUAL</act:type>
+  <act:commodity>
+    <cmdty:space>FUND</cmdty:space>
+    <cmdty:id>CI SDY-2</cmdty:id>
+  </act:commodity>
+  <act:commodity-scu>10000</act:commodity-scu>
+  <act:code>CIG11461</act:code>
+  <act:description>Signature Diversified Yield II A 11461</act:description>
+  <act:slots>
+    <slot>
+      <slot:key>color</slot:key>
+      <slot:value type="string">#e9e9a0a0ebeb</slot:value>
+    </slot>
+    <slot>
+      <slot:key>reconcile-info</slot:key>
+      <slot:value type="frame">
+        <slot>
+          <slot:key>include-children</slot:key>
+          <slot:value type="integer">0</slot:value>
+        </slot>
+        <slot>
+          <slot:key>last-date</slot:key>
+          <slot:value type="integer">1514782799</slot:value>
+        </slot>
+        <slot>
+          <slot:key>last-interval</slot:key>
+          <slot:value type="frame">
+            <slot>
+              <slot:key>days</slot:key>
+              <slot:value type="integer">0</slot:value>
+            </slot>
+            <slot>
+              <slot:key>months</slot:key>
+              <slot:value type="integer">6</slot:value>
+            </slot>
+          </slot:value>
+        </slot>
+      </slot:value>
+    </slot>
+  </act:slots>
+  <act:parent type="guid">68043c5d67a4ff69c68a9e5870b59fb1</act:parent>
+</gnc:account>
+
+<!-- Example MF-Income Transaction
+======================================= -->
+
+<gnc:transaction version="2.0.0">
+  <trn:id type="guid">635f8b660cf8e30f94e3c7b50faa13ba</trn:id>
+  <trn:currency>
+    <cmdty:space>ISO4217</cmdty:space>
+    <cmdty:id>CAD</cmdty:id>
+  </trn:currency>
+  <trn:date-posted>
+    <ts:date>2014-10-31 00:00:00 -0400</ts:date>
+  </trn:date-posted>
+  <trn:date-entered>
+    <ts:date>2014-12-19 16:03:43 -0500</ts:date>
+  </trn:date-entered>
+  <trn:description>CI Investments</trn:description>
+  <trn:slots>
+    <slot>
+      <slot:key>date-posted</slot:key>
+      <slot:value type="gdate">
+        <gdate>2014-10-31</gdate>
+      </slot:value>
+    </slot>
+  </trn:slots>
+  <trn:splits>
+    <trn:split>
+      <split:id type="guid">f9f58032839abf8f28f5174bbcc0aed0</split:id>
+      <split:action>Dist</split:action>
+      <split:reconciled-state>y</split:reconciled-state>
+      <split:reconcile-date>
+        <ts:date>2014-12-31 23:59:59 -0500</ts:date>
+      </split:reconcile-date>
+      <split:value>140/100</split:value>
+      <split:quantity>1310/10000</split:quantity>
+      <split:account type="guid">5e6c98457ccf2b84435413d5a7433eab</split:account>
+    </trn:split>
+    <trn:split>
+      <split:id type="guid">09ec04b44597761f308b6454f4410f2d</split:id>
+      <split:reconciled-state>y</split:reconciled-state>
+      <split:reconcile-date>
+        <ts:date>2015-07-26 23:59:59 -0400</ts:date>
+      </split:reconcile-date>
+      <split:value>-140/100</split:value>
+      <split:quantity>-140/100</split:quantity>
+      <split:account type="guid">692f41056c505b1700205920b0d93899</split:account>
+    </trn:split>
+  </trn:splits>
+</gnc:transaction>
+</gnc-v2>
