@@ -1,7 +1,12 @@
 .*
 !.gitignore
 *.gnc
-/logs
+*.gnucash
+*.log
+*.out
+**/in
+**/out
+**/logs
 /bindings
-/examples
-
+**/examples
+**/test*

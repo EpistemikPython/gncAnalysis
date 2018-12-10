@@ -112,15 +112,21 @@ try:
     
     print("Tx imbalance = {0}".format(tx.GetImbalanceValue().to_string()))
     
-    if argv[5].upper() != "PROD":
+    mode = argv[5].upper()
+    if mode != "PROD":
+        print("Mode = {}: Roll back changes!".format(mode))
         tx.RollbackEdit()
     else:
+        print("Mode = {}: Commit and save changes.".format(mode))
         tx.CommitEdit()
         session.save()
 
     session.end()
 #     session.destroy()
 except:
+    print("createGnuTxs() EXCEPTION!")
     if "session" in locals():
         session.end()
     raise
+
+print("\n >>> PROGRAM ENDED.")
