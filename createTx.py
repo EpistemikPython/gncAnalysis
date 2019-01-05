@@ -27,6 +27,9 @@
 #   @author Mark Jenkins, ParIT Worker Co-operative <mark@parit.ca>
 #   @ingroup python_bindings_examples
 
+__created__ = "2018"
+__updated__ = "2019-01-05 10:16"
+
 from sys import argv, exit
 
 from gnucash import Session, Transaction, Split, Account, GncNumeric, GncCommodity, ACCT_TYPE_BANK, GUID

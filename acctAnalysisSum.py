@@ -22,6 +22,9 @@
 # @author Mark Jenkins, ParIT Worker Co-operative <mark@parit.ca>
 # @revised Mark Sattolo <epistemik@gmail.com>
 
+__created__ = "2018"
+__updated__ = "2019-01-05 10:16"
+
 from sys import argv, stdout
 from datetime import date, timedelta, datetime
 from bisect import bisect_right
