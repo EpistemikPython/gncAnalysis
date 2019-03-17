@@ -10,8 +10,8 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, contact:
@@ -19,11 +19,14 @@
 # 51 Franklin Street, Fifth Floor    Fax:    +1-617-542-2652
 # Boston, MA  02110-1301,  USA       gnu@gnu.org
 #
+# @original account_analysis.py for Python 2
 # @author Mark Jenkins, ParIT Worker Co-operative <mark@parit.ca>
+#
 # @revised Mark Sattolo <epistemik@gmail.com>
+# @version Python 3.6
 
 __created__ = "2018"
-__updated__ = "2019-01-05 10:16"
+__updated__ = "2019-03-17"
 
 from sys import argv, stdout
 from datetime import date, timedelta, datetime
@@ -43,15 +46,15 @@ That will do an analysis on the account 'Assets:Test Account' from
 gnucash_file.xac, all of the debits and all of the credits will be shown
 and summed on for 12 monthly periods starting from January (1st month) 2010
 
-if you just want to see the credit and debit sums for each period, use
-the debits-noshow and credits-noshow argument
+if you just want to see the credit and debit sums for each period,
+use the debits-noshow and credits-noshow argument
 
 The output goes to stdout and is in csv format.
 
 Account path arguments are space separated, so you need to quote parts of
 the account path with spaces in them
 
-available period types are monthly quarterly and yearly
+available period types are monthly, quarterly and yearly
 
 At the moment this script only supports GnuCash files of the sqllite3 type
 its an easy edit to switch to xml: etc...
@@ -60,13 +63,13 @@ its an easy edit to switch to xml: etc...
 # a dictionary with a period name as key, and number of months in that
 # kind of period as the value
 PERIODS = {
-    "monthly": 1,
-    "quarterly": 3,
+    "monthly"  :  1,
+    "quarterly":  3,
     # mhs | add thirdly, halfly, biyearly
-    "thirdly": 4,
-    "halfly": 6,
-    "yearly": 12,
-    "biyearly": 24
+    "thirdly"  :  4,
+    "halfly"   :  6,
+    "yearly"   : 12,
+    "biyearly" : 24
 }
 
 NUM_MONTHS = 12
@@ -107,7 +110,7 @@ def next_period_start(start_year, start_month, period_type):
     # any branching; if end_month > NUM_MONTHS
     #
     # Another super nice thing is that you can add all kinds of period lengths to PERIODS
-    # fix Python 2 to Python 3
+    # fix Python 2 to Python 3 -- need '//' to do integer division
     end_year = start_year + ((end_month - 1) // NUM_MONTHS)
     end_month = ((end_month - 1) % NUM_MONTHS) + 1
 
@@ -123,8 +126,9 @@ def period_end(start_year, start_month, period_type):
     # last step, the end date is day back from the start of the next period
     # so we get a period end like
     # 2010-03-31 for period starting 2010-01 instead of 2010-04-01
-    # fix Python 2 to Python 3
-    # print("end_year({}) = {}; end_month({}) = {}; ONE_DAY({}) = {}".format(type(end_year), end_year, type(end_month), end_month, type(ONE_DAY), ONE_DAY))
+    # fix Python 2 to Python 3 -- need to fix next_period_start() so end_year is an int rather than a float
+    # print("end_year({}) = {}; end_month({}) = {}; ONE_DAY({}) = {}"
+    #       .format(type(end_year), end_year, type(end_month), end_month, type(ONE_DAY), ONE_DAY))
     return date(end_year, end_month, 1) - ONE_DAY
 
 
@@ -158,7 +162,7 @@ def get_splits(acct, period_starts, period_list):
     # insert and add all splits in the periods of interest
     for split in acct.GetSplitList():
         trans = split.parent
-        # fix Python 2 to Python 3
+        # fix Python 2 to Python 3 -- Gnucash Py3 bindings: GetDate() returns a datetime, not a timestamp
         tx_date = trans.GetDate()
         # print("tx_date({}) = {}".format(type(tx_date), tx_date))
         # trans_date = date.fromtimestamp(tx_date)
@@ -175,25 +179,18 @@ def get_splits(acct, period_starts, period_list):
             # get the period bucket appropriate for the split in question
             period = period_list[period_index]
 
-            # more specifically, we'd expect the transaction date to be on or after the period start
-            # and before or on the period end, assuming the binary search (bisect_right)
-            # assumptions from above are right...
-            #
+            # more specifically, we'd expect the transaction date to be on or after the period start and before or on
+            # the period end, assuming the binary search (bisect_right) assumptions from above are right...
             # in other words, we assert our use of binary search
-            # and the filtered results from the above if provide all the protection we need
+            # and the filtered results from the above 'if' provide all the protection we need
             assert (period[1] >= trans_date >= period[0])
 
             split_amount = gnc_numeric_to_python_decimal(split.GetAmount())
 
-            # if the amount is negative, this is a credit
-            if split_amount < ZERO:
-                debit_credit_offset = 1
-            # else a debit
-            else:
-                debit_credit_offset = 0
+            # if the amount is negative this is a credit, else a debit
+            debit_credit_offset = 1 if split_amount < ZERO else 0
 
             # store the debit or credit Split with its transaction, using the above offset to get in the right bucket
-            #
             # if we wanted to be really cool we'd keep the transactions
             period[2 + debit_credit_offset].append((trans, split))
 
@@ -212,28 +209,28 @@ def main():
         print("The following example analyzes 12 months of Assets:TestAccount from <...>/test.gnucash, starting in January of 2018, and shows both credits and debits:")
         print("{} <...>/test.gnucash 2018 1 monthly 12 debits-show credits-show Assets TestAccount\n".format(exe))
         print("The following example analyzes 2 quarters of Liabilities:FirstLevel:SecondLevel from <...>/test.gnucash, starting March 2016, and shows credits but not debits:")
-        print("{} <...>/test.gnucash 2016 3 quarterly 2 debits-noshow credits-show Liabilities <FirstLevel> <SecondLevel>".format(exe))
+        print("{} <...>/test.gnucash 2016 3 quarterly 2 debx credits-show Liabilities <FirstLevel> <SecondLevel>".format(exe))
         print("PROGRAM EXIT!")
         return
 
     try:
         (gnucash_file, start_year, start_month, period_type, periods, debits_show, credits_show) = argv[1:8]
         # mhs | debug
-        print("showing " + periods + " periods of " + period_type + " starting from " + start_year + "-" + start_month)
+        print("showing {} periods of {} starting from {}-{}".format(periods, period_type, start_year, start_month))
 
         start_year, start_month, periods = [int(blah) for blah in (start_year, start_month, periods)]
 
         # mhs | debug
-        print("run-time: " + str(datetime.now()))
-        print("running: " + argv[0])
-        print("using gnucash file: " + gnucash_file)
+        print("run-time: {}".format(str(datetime.now())))
+        print("running: {}".format(exe))
+        print("using gnucash file: {}".format(gnucash_file))
 
         debits_show = debits_show == DEBITS_SHOW
         credits_show = credits_show == CREDITS_SHOW
 
         account_path = argv[8:]
         # mhs | debug
-        print("account_path = " + str(account_path))
+        print("account_path = {}".format(str(account_path)))
 
         gnucash_session = Session(gnucash_file, is_new=False)
 
@@ -243,19 +240,20 @@ def main():
 
         account_of_interest = account_from_path(root_account, account_path)
         # mhs | debug
-        print("account_of_interest = " + account_of_interest.GetName())
+        print("account_of_interest = {}".format(account_of_interest.GetName()))
 
         # a list of all the periods of interest
         # for each period keep the start date, end date, a list to store debits and credits,
         # and sums for tracking the sum of all debits and sum of all credits
         period_list = [
-            [start_date, end_date,
-             [],  # debits
-             [],  # credits
-             ZERO,  # debits sum
-             ZERO,  # credits sum
-             ZERO  # TOTAL
-             ]
+            [
+                start_date, end_date,
+                [],    # debits
+                [],    # credits
+                ZERO,  # debits sum
+                ZERO,  # credits sum
+                ZERO   # TOTAL
+            ]
             for start_date, end_date in generate_period_boundaries(start_year, start_month, period_type, periods)
         ]
         # a copy of the above list with just the period start dates
@@ -280,8 +278,7 @@ def main():
 
         def generate_detail_rows(values):
             return (
-                ('', '', '', '', trans.GetDescription(),
-                 gnc_numeric_to_python_decimal(split.GetAmount()))
+                ('', '', '', '', trans.GetDescription(), gnc_numeric_to_python_decimal(split.GetAmount()))
                 for trans, split in values)
 
         # write out the overall totals for the account of interest
@@ -301,11 +298,11 @@ def main():
         # no save needed, we're just reading..
         gnucash_session.end()
     except Exception as ae:
-        if "gnucash_session" in locals():
+        if "gnucash_session" in locals() and gnucash_session is not None:
             gnucash_session.end()
         raise
 
-    print("PROGRAM ENDED.")
+    print("\n >>> PROGRAM ENDED.")
 
 
 if __name__ == "__main__":
