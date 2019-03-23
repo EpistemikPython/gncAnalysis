@@ -26,7 +26,7 @@
 # @version Python 3.6
 
 __created__ = "2018"
-__updated__ = "2019-03-17"
+__updated__ = "2019-03-23"
 
 from sys import argv, stdout
 from datetime import date, timedelta, datetime
@@ -93,7 +93,7 @@ def gnc_numeric_to_python_decimal(numeric):
     digit_tuple = tuple(int(char) for char in str(copy.num()) if char != '-')
     denominator = copy.denom()
     exponent = int(log10(denominator))
-    assert ((10 ** exponent) == denominator)
+    assert( (10 ** exponent) == denominator )
     return Decimal((sign, digit_tuple, -exponent))
 
 
@@ -183,7 +183,7 @@ def get_splits(acct, period_starts, period_list):
             # the period end, assuming the binary search (bisect_right) assumptions from above are right...
             # in other words, we assert our use of binary search
             # and the filtered results from the above 'if' provide all the protection we need
-            assert (period[1] >= trans_date >= period[0])
+            assert( period[1] >= trans_date >= period[0] )
 
             split_amount = gnc_numeric_to_python_decimal(split.GetAmount())
 
@@ -198,13 +198,15 @@ def get_splits(acct, period_starts, period_list):
             period[4 + debit_credit_offset] += split_amount
 
 
-def main():
+def aa_sum_main():
     exe = argv[0].split('/')[-1]
-    if len(argv) < 10:
+    if len(argv) < 9:
         print("NOT ENOUGH parameters!")
         print("usage: {} <book url> <start year> <start month, numeric> <period type: 'monthly', 'quarterly', etc>".format(exe))
-        print("\t\t\t <number of periods to show, from start year and month> <whether to show debits: debits-show for true, all other values false>")
-        print("\t\t\t <whether to show credits: credits-show for true, all other values false> <space-separated account path, as many nested levels as desired>")
+        print("\t\t\t <number of periods to show, from start year and month>")
+        print("\t\t\t <whether to show debits: debits-show for true, all other values false>")
+        print("\t\t\t <whether to show credits: credits-show for true, all other values false>")
+        print("\t\t\t <space-separated account path, as many nested levels as desired>")
         print("examples:\n")
         print("The following example analyzes 12 months of Assets:TestAccount from <...>/test.gnucash, starting in January of 2018, and shows both credits and debits:")
         print("{} <...>/test.gnucash 2018 1 monthly 12 debits-show credits-show Assets TestAccount\n".format(exe))
@@ -269,17 +271,18 @@ def main():
             # mhs | calculate the sums of debits and credits for EACH sub-account but just keep the overall total
             print("Descendants of %s:" % account_of_interest.GetName())
             for subAcct in descendants:
-                print("%s" % subAcct.GetName())
+                print("{} balance = {}".format(subAcct.GetName(), subAcct.GetBalance()))
                 get_splits(subAcct, period_starts, period_list)
 
         # write out the column headers
         csv_writer = csv.writer(stdout)
+        csv_writer.writerow(())
         csv_writer.writerow(('period start', 'period end', 'debits', 'credits', 'TOTAL'))
 
         def generate_detail_rows(values):
             return (
                 ('', '', '', '', trans.GetDescription(), gnc_numeric_to_python_decimal(split.GetAmount()))
-                for trans, split in values)
+                for trans, split in values )
 
         # write out the overall totals for the account of interest
         for start_date, end_date, debits, creds, debit_sum, credit_sum, total in period_list:
@@ -306,4 +309,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    aa_sum_main()
