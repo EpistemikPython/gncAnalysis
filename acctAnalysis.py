@@ -73,6 +73,7 @@ DEBITS_SHOW, CREDITS_SHOW = ("debits-show", "credits-show")
 
 ZERO = Decimal(0)
 
+
 def gnc_numeric_to_python_Decimal(numeric):
     negative = numeric.negative_p()
     if negative:
@@ -124,14 +125,15 @@ def period_end(start_year, start_month, period_type):
     
 
 def generate_period_boundaries(start_year, start_month, period_type, periods):
-    for i in xrange(periods):
+    for i in range(periods):
         yield ( date(start_year, start_month, 1),  period_end(start_year, start_month, period_type) )
         start_year, start_month = next_period_start(start_year, start_month, period_type)
+
 
 def account_from_path(top_account, account_path, original_path=None):
     # mhs | debug
 #     print "top_account = %s, account_path = %s, original_path = %s" % (top_account, account_path, original_path)
-    if original_path == None:
+    if original_path is None:
         original_path = account_path
     account, account_path = account_path[0], account_path[1:]
     # mhs | debug
@@ -140,7 +142,7 @@ def account_from_path(top_account, account_path, original_path=None):
     account = top_account.lookup_by_name(account)
     # mhs | debug
 #     print "account = " + str(account)
-    if account == None:
+    if account is None:
         raise Exception("path " + ''.join(original_path) + " could not be found")
     if len(account_path) > 0 :
         return account_from_path(account, account_path, original_path)
@@ -163,7 +165,7 @@ def main():
     try:
         (gnucash_file, start_year, start_month, period_type, periods, debits_show, credits_show) = argv[1:8]
         # mhs | debug
-        print "Accessing gnucash file: %s" % gnucash_file
+        print("Accessing gnucash file: {}".format(gnucash_file))
 
         start_year, start_month, periods = [ int(blah) for blah in (start_year, start_month, periods) ]
 
@@ -172,26 +174,26 @@ def main():
 
         account_path = argv[8:]
         # mhs | debug
-        print "account_path = " + str(account_path)
+        print("account_path = " + str(account_path))
 
         gnucash_session = Session(gnucash_file, is_new=False)
-        
+
         root_account = gnucash_session.book.get_root_account()
         # mhs | debug
-        print "root_account = " + root_account.GetName()
+        print("root_account = " + root_account.GetName())
 
         account_of_interest = account_from_path(root_account, account_path)
         # mhs | debug
-        print "account_of_interest = " + account_of_interest.GetName()
-        
+        print("account_of_interest = " + account_of_interest.GetName())
+
         # mhs | try getting the list of all descendant accounts
         descendants = account_of_interest.get_descendants()
-        print "Descendants of %s:" % account_of_interest.GetName()
+        print("Descendants of %s:" % account_of_interest.GetName())
         for subAcct in descendants:
-            print "%s:" % subAcct.GetName()
+            print("{}:".format(subAcct.GetName()))
 
             # mhs | calculate the sums of debits and credits for EACH sub-account
-            
+
             # a list of all the periods of interest
             # for each period keep the start date, end date, a list to store debits and credits,
             # and sums for tracking the sum of all debits and sum of all credits
@@ -206,23 +208,23 @@ def main():
             ]
             # a copy of the above list with just the period start dates
             period_starts = [e[0] for e in period_list ]
-        
+
             # insert and add all splits in the periods of interest
             for split in subAcct.GetSplitList():
                 trans = split.parent
                 trans_date = date.fromtimestamp(trans.GetDate())
-    
+
                 # use binary search to find the period that starts before or on the transaction date
                 period_index = bisect_right( period_starts, trans_date ) - 1
-            
+
                 # ignore transactions with a date before the matching period start
                 # (after subtracting 1 above start_index would be -1)
                 # and after the last period_end
                 if period_index >= 0 and trans_date <= period_list[len(period_list)-1][1]:
-                    
+
                     # get the period bucket appropriate for the split in question
                     period = period_list[period_index]
-    
+
                     # more specifically, we'd expect the transaction date to be on or after the period start
                     # and before or on the period end, assuming the binary search (bisect_right)
                     # assumptions from above are right...
@@ -230,37 +232,36 @@ def main():
                     # in other words, we assert our use of binary search
                     # and the filtered results from the above if provide all the protection we need
                     assert( trans_date>= period[0] and trans_date <= period[1] )
-                   
+
                     split_amount = gnc_numeric_to_python_Decimal(split.GetAmount())
-    
+
                     # if the amount is negative, this is a credit
                     if split_amount < ZERO:
                         debit_credit_offset = 1
                     # else a debit
                     else:
                         debit_credit_offset = 0
-    
+
                     # store the debit or credit Split with its transaction, using the above offset to get in the right bucket
                     #
                     # if we wanted to be really cool we'd keep the transactions
                     period[2+debit_credit_offset].append( (trans, split) )
-        
+
                     # add the debit or credit to the sum, using the above offset to get in the right bucket
                     period[4+debit_credit_offset] += split_amount
-    
+
             csv_writer = csv.writer(stdout)
             csv_writer.writerow( ('period start', 'period end', 'debits', 'credits') )
-        
+
             def generate_detail_rows(values):
                 return (
                     ('', '', '', '', trans.GetDescription(),
                      gnc_numeric_to_python_Decimal(split.GetAmount()))
                     for trans, split in values )
-                
-    
+
             for start_date, end_date, debits, creds, debit_sum, credit_sum in period_list:
                 csv_writer.writerow( (start_date, end_date, debit_sum, credit_sum) )
-    
+
                 if debits_show and len(debits) > 0:
                     csv_writer.writerow( ('DEBITS', '', '', '', 'description', 'value') )
                     csv_writer.writerows( generate_detail_rows(debits) )
@@ -269,13 +270,14 @@ def main():
                     csv_writer.writerow( ('CREDITS', '', '', '', 'description', 'value') )
                     csv_writer.writerows( generate_detail_rows(creds) )
                     csv_writer.writerow( () )
-    
+
             # no save needed, we're just reading..
             gnucash_session.end()
     except:
         if "gnucash_session" in locals():
             gnucash_session.end()
         raise
+
 
 if __name__ == "__main__":
     main()
