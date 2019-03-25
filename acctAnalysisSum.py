@@ -24,9 +24,8 @@
 #
 # @revised Mark Sattolo <epistemik@gmail.com>
 # @version Python 3.6
-
-__created__ = "2018"
-__updated__ = "2019-03-23"
+# @created 2018
+# @updated 2019-03-23
 
 from sys import argv, stdout
 from datetime import date, timedelta, datetime
@@ -74,7 +73,7 @@ PERIODS = {
 
 NUM_MONTHS = 12
 ONE_DAY = timedelta(days=1)
-DEBITS_SHOW, CREDITS_SHOW = ("debits-show", "credits-show")
+DEBITS_SHOW, CREDITS_SHOW = "debits-show", "credits-show"
 ZERO = Decimal(0)
 
 
@@ -88,7 +87,7 @@ def gnc_numeric_to_python_decimal(numeric):
     copy = GncNumeric(numeric.num(), numeric.denom())
     result = copy.to_decimal(None)
     if not result:
-        raise Exception("gnc numeric value %s can't be converted to decimal" % copy.to_string())
+        raise Exception("gnc numeric value {} can't be converted to decimal".format(copy.to_string()))
 
     digit_tuple = tuple(int(char) for char in str(copy.num()) if char != '-')
     denominator = copy.denom()
@@ -119,7 +118,7 @@ def next_period_start(start_year, start_month, period_type):
 
 def period_end(start_year, start_month, period_type):
     if period_type not in PERIODS:
-        raise Exception("%s is not a valid period, should be %s" % (period_type, str(PERIODS.keys())))
+        raise Exception("{} is not a valid period, should be {}".format(period_type, str(PERIODS.keys())))
 
     end_year, end_month = next_period_start(start_year, start_month, period_type)
 
@@ -197,6 +196,9 @@ def get_splits(acct, period_starts, period_list):
             # add the debit or credit to the sum, using the above offset to get in the right bucket
             period[4 + debit_credit_offset] += split_amount
 
+            # add the debit or credit to the overall total
+            period[6] += split_amount
+
 
 def aa_sum_main():
     exe = argv[0].split('/')[-1]
@@ -269,7 +271,7 @@ def aa_sum_main():
             get_splits(account_of_interest, period_starts, period_list)
         else:
             # mhs | calculate the sums of debits and credits for EACH sub-account but just keep the overall total
-            print("Descendants of %s:" % account_of_interest.GetName())
+            print("Descendants of {}:".format(account_of_interest.GetName()))
             for subAcct in descendants:
                 print("{} balance = {}".format(subAcct.GetName(), subAcct.GetBalance()))
                 get_splits(subAcct, period_starts, period_list)
@@ -286,7 +288,7 @@ def aa_sum_main():
 
         # write out the overall totals for the account of interest
         for start_date, end_date, debits, creds, debit_sum, credit_sum, total in period_list:
-            csv_writer.writerow((start_date, end_date, debit_sum, credit_sum, (debit_sum + credit_sum)))
+            csv_writer.writerow((start_date, end_date, debit_sum, credit_sum, total))
 
             # write the details for each credit or debit if requested on the command line
             if debits_show and len(debits) > 0:
