@@ -54,6 +54,7 @@ ONE_DAY = timedelta(days=1)
 ZERO = Decimal(0)
 
 
+# noinspection PyUnresolvedReferences
 def gnc_numeric_to_python_decimal(numeric):
     negative = numeric.negative_p()
     sign = 1 if negative else 0
@@ -61,7 +62,7 @@ def gnc_numeric_to_python_decimal(numeric):
     copy = GncNumeric(numeric.num(), numeric.denom())
     result = copy.to_decimal(None)
     if not result:
-        raise Exception("gnc numeric value '{}' CAN'T be converted to decimal!".format(copy.to_string()))
+        raise Exception("GncNumeric value '{}' CANNOT be converted to decimal!".format(copy.to_string()))
 
     digit_tuple = tuple(int(char) for char in str(copy.num()) if char != '-')
     denominator = copy.denom()
@@ -74,8 +75,8 @@ def next_period_start(start_year, start_month, period_type):
     # add numbers of months for the period length
     end_month = start_month + PERIODS[period_type]
 
-    # use integer division to find out if the new end month is in a different year, what year it is,
-    # and what the end month number should be changed to.
+    # use integer division to find out if the new end month is in a different year,
+    # what year it is, and what the end month number should be changed to.
     end_year = start_year + ((end_month - 1) // NUM_MONTHS)
     end_month = ((end_month - 1) % NUM_MONTHS) + 1
 
@@ -84,18 +85,18 @@ def next_period_start(start_year, start_month, period_type):
 
 def period_end(start_year, start_month, period_type):
     if period_type not in PERIODS:
-        raise Exception("'{}' is NOT a valid period >> should be {}!".format(period_type, str(PERIODS.keys())))
+        raise Exception("'{}' is NOT a valid period >> MUST be one of '{}'!".format(period_type, str(PERIODS.keys())))
 
     end_year, end_month = next_period_start(start_year, start_month, period_type)
 
-    # last step, the end date is day back from the start of the next period
-    # so we get a period end like 2010-03-31 for period starting 2010-01 instead of 2010-04-01
+    # last step, the end date is one day back from the start of the next period
+    # so we get a period end like 2010-03-31 instead of 2010-04-01
     return date(end_year, end_month, 1) - ONE_DAY
 
 
 def generate_period_boundaries(start_year, start_month, period_type, periods):
     for i in range(periods):
-        yield (date(start_year, start_month, 1), period_end(start_year, start_month, period_type))
+        yield( date(start_year, start_month, 1), period_end(start_year, start_month, period_type) )
         start_year, start_month = next_period_start(start_year, start_month, period_type)
 
 
@@ -109,7 +110,7 @@ def account_from_path(top_account, account_path, original_path=None):
     account = top_account.lookup_by_name(account)
     # print("account = " + str(account))
     if account is None:
-        raise Exception("path '" + str(original_path) + "' could NOT be found!")
+        raise Exception("Path '" + str(original_path) + "' could NOT be found!")
     if len(account_path) > 0:
         return account_from_path(account, account_path, original_path)
     else:
@@ -141,14 +142,16 @@ def get_splits(acct, period_starts, period_list):
             # if the amount is negative this is a credit, else a debit
             debit_credit_offset = 1 if split_amount < ZERO else 0
 
-            # add the debit or credit to the sum, using the above offset to get in the right bucket
+            # add the debit or credit to the sum, using the offset to get in the right bucket
             period[2 + debit_credit_offset] += split_amount
 
             # add the debit or credit to the overall total
             period[4] += split_amount
 
 
-def gr_qtr_main():
+# noinspection PyUnresolvedReferences
+def get_rev_qtr_main():
+    global gnucash_session
     exe = argv[0].split('/')[-1]
     if len(argv) < 4:
         print("NOT ENOUGH parameters!")
@@ -166,12 +169,6 @@ def gr_qtr_main():
 
         start_month = (rev_quarter * 3) - 2
 
-        gnucash_session = Session(gnucash_file, is_new=False)
-        root_account = gnucash_session.book.get_root_account()
-
-        account_of_interest = account_from_path(root_account, REV_ACCTS["Sal_Mk"])
-        print("account_of_interest = {}".format(account_of_interest.GetName()))
-
         # a list of all the periods of interest
         # for each period keep the start date, end date, debits and credits sums and overall total
         period_list = [
@@ -187,6 +184,12 @@ def gr_qtr_main():
         # a copy of the above list with just the period start dates
         period_starts = [e[0] for e in period_list]
         print(period_starts)
+
+        gnucash_session = Session(gnucash_file, is_new=False)
+        root_account = gnucash_session.book.get_root_account()
+
+        account_of_interest = account_from_path(root_account, REV_ACCTS["Sal_Mk"])
+        print("account_of_interest = {}".format(account_of_interest.GetName()))
 
         descendants = account_of_interest.get_descendants()
 
@@ -222,4 +225,4 @@ def gr_qtr_main():
 
 
 if __name__ == "__main__":
-    gr_qtr_main()
+    get_rev_qtr_main()
