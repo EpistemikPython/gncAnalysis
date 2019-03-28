@@ -33,6 +33,7 @@ from math import log10
 from gnucash import Session, GncNumeric
 
 
+# noinspection PyUnresolvedReferences
 def gnc_numeric_to_python_decimal(numeric):
     negative = numeric.negative_p()
     sign = 1 if negative else 0
@@ -75,7 +76,9 @@ def show_asset_info(acct, idate, cur):
     print("{} balance on 2018-12-31 = CAD${}".format(acct_name, acct_cad))
 
 
+# noinspection PyUnresolvedReferences, PyBroadException
 def find_av_main():
+    global gnucash_session
     exe = argv[0].split('/')[-1]
     if len(argv) < 6:
         print("NOT ENOUGH parameters!")

@@ -77,6 +77,7 @@ DEBITS_SHOW, CREDITS_SHOW = "debits-show", "credits-show"
 ZERO = Decimal(0)
 
 
+# noinspection PyUnresolvedReferences
 def gnc_numeric_to_python_decimal(numeric):
     negative = numeric.negative_p()
     if negative:
@@ -200,7 +201,9 @@ def get_splits(acct, period_starts, period_list):
             period[6] += split_amount
 
 
+# noinspection PyUnresolvedReferences
 def aa_sum_main():
+    global gnucash_session
     exe = argv[0].split('/')[-1]
     if len(argv) < 9:
         print("NOT ENOUGH parameters!")
