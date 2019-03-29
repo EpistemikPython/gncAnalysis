@@ -41,7 +41,7 @@ REV_ACCTS = {
     "Kids"   : ["REV_Kids"],
     "Other"  : ["REV_Other"],
     "Sal_Mk" : ["REV_Salary", "Mark", "Mk-Gross"],
-    "Sal_Lu" : ["REV_Salary", "Lulu", "Lu-Gross"],
+    "Sal_Lu" : ["REV_Salary", "Louise", "Lu-Gross"],
 }
 
 # a dictionary with a period name as key, and number of months in that kind of period as the value
@@ -180,39 +180,49 @@ def get_rev_qtr_main():
             ]
             for start_date, end_date in generate_period_boundaries(rev_year, start_month, 'quarterly', 1)
         ]
-        print(period_list)
+        # print(period_list)
         # a copy of the above list with just the period start dates
         period_starts = [e[0] for e in period_list]
-        print(period_starts)
+        # print(period_starts)
 
         gnucash_session = Session(gnucash_file, is_new=False)
         root_account = gnucash_session.book.get_root_account()
 
-        account_of_interest = account_from_path(root_account, REV_ACCTS["Sal_Mk"])
-        print("account_of_interest = {}".format(account_of_interest.GetName()))
+        for item in REV_ACCTS:
+            period_list[0][2] = 0
+            period_list[0][3] = 0
+            acct_base = REV_ACCTS[item]
+            # print("acct = {}".format(acct_base))
 
-        descendants = account_of_interest.get_descendants()
+            account_of_interest = account_from_path(root_account, acct_base)
+            acct_name = account_of_interest.GetName()
+            print("\naccount_of_interest = {}".format(acct_name))
 
-        # get the split amounts for the parent account
-        get_splits(account_of_interest, period_starts, period_list)
-        if len(descendants) > 0:
-            # for EACH sub-account add to the overall total
-            print("Descendants of {}:".format(account_of_interest.GetName()))
-            for subAcct in descendants:
-                print("{} balance = {}".format(subAcct.GetName(), gnc_numeric_to_python_decimal(subAcct.GetBalance())))
-                get_splits(subAcct, period_starts, period_list)
+            descendants = account_of_interest.get_descendants()
 
-        # write out the column headers
-        csv_writer = csv.writer(stdout)
-        csv_writer.writerow('')
-        csv_writer.writerow(('period start', 'period end', 'debits', 'credits', 'TOTAL'))
+            # get the split amounts for the parent account
+            get_splits(account_of_interest, period_starts, period_list)
+            if len(descendants) > 0:
+                # for EACH sub-account add to the overall total
+                # print("Descendants of {}:".format(account_of_interest.GetName()))
+                for subAcct in descendants:
+                    # print("{} balance = {}".format(subAcct.GetName(), gnc_numeric_to_python_decimal(subAcct.GetBalance())))
+                    get_splits(subAcct, period_starts, period_list)
 
-        # write out the overall totals for the account of interest
-        for start_date, end_date, debit_sum, credit_sum, total in period_list:
-            csv_writer.writerow((start_date, end_date, debit_sum, credit_sum, total))
+            # write out the column headers
+            csv_writer = csv.writer(stdout)
+            # csv_writer.writerow('')
+            csv_writer.writerow(('period start', 'period end', 'debits', 'credits', 'TOTAL'))
+
+            # write out the overall totals for the account of interest
+            for start_date, end_date, debit_sum, credit_sum, total in period_list:
+                csv_writer.writerow((start_date, end_date, debit_sum, credit_sum, total))
+
+            sum_revenue = (period_list[0][2] + period_list[0][3]) * (-1)
+            print("{} Revenue for {}-Q{} = {}".format(acct_name, str_year, str_quarter, sum_revenue))
 
         tot_revenue = period_list[0][4] * (-1)
-        print("\n{} Revenue for {}-Q{} = {}".format("Sal_Mk", str_year, str_quarter, tot_revenue))
+        print("\n{} Revenue for {}-Q{} = {}".format("TOTAL", str_year, str_quarter, tot_revenue))
 
         # no save needed, we're just reading..
         gnucash_session.end()
