@@ -25,7 +25,7 @@
 # @revised Mark Sattolo <epistemik@gmail.com>
 # @version Python 3.6
 # @created 2019-03-24
-# @updated 2019-03-26
+# @updated 2019-03-29
 
 from sys import argv, stdout
 from datetime import date, timedelta, datetime
@@ -38,10 +38,8 @@ from gnucash import Session, GncNumeric
 # find the proper path to the account in the gnucash file
 REV_ACCTS = {
     "Invest" : ["REV_Invest"],
-    "Kids"   : ["REV_Kids"],
     "Other"  : ["REV_Other"],
-    "Sal_Mk" : ["REV_Salary", "Mark", "Mk-Gross"],
-    "Sal_Lu" : ["REV_Salary", "Louise", "Lu-Gross"],
+    "Salary" : ["REV_Salary"]
 }
 
 # a dictionary with a period name as key, and number of months in that kind of period as the value
@@ -189,19 +187,20 @@ def get_rev_qtr_main():
         root_account = gnucash_session.book.get_root_account()
 
         for item in REV_ACCTS:
+            # reset the debit and credit totals for each individual account
             period_list[0][2] = 0
             period_list[0][3] = 0
+
             acct_base = REV_ACCTS[item]
             # print("acct = {}".format(acct_base))
 
             account_of_interest = account_from_path(root_account, acct_base)
             acct_name = account_of_interest.GetName()
             print("\naccount_of_interest = {}".format(acct_name))
-
-            descendants = account_of_interest.get_descendants()
-
             # get the split amounts for the parent account
             get_splits(account_of_interest, period_starts, period_list)
+
+            descendants = account_of_interest.get_descendants()
             if len(descendants) > 0:
                 # for EACH sub-account add to the overall total
                 # print("Descendants of {}:".format(account_of_interest.GetName()))
@@ -219,10 +218,10 @@ def get_rev_qtr_main():
                 csv_writer.writerow((start_date, end_date, debit_sum, credit_sum, total))
 
             sum_revenue = (period_list[0][2] + period_list[0][3]) * (-1)
-            print("{} Revenue for {}-Q{} = {}".format(acct_name, str_year, str_quarter, sum_revenue))
+            print("{} Revenue for {}-Q{} = ${}".format(acct_name, str_year, str_quarter, sum_revenue))
 
         tot_revenue = period_list[0][4] * (-1)
-        print("\n{} Revenue for {}-Q{} = {}".format("TOTAL", str_year, str_quarter, tot_revenue))
+        print("\n{} Revenue for {}-Q{} = ${}".format("TOTAL", str_year, str_quarter, tot_revenue))
 
         # no save needed, we're just reading..
         gnucash_session.end()
