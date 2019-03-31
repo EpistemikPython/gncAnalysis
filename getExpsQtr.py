@@ -25,7 +25,7 @@
 # @revised Mark Sattolo <epistemik@gmail.com>
 # @version Python 3.6
 # @created 2019-03-29
-# @updated 2019-03-29
+# @updated 2019-03-31
 
 from sys import argv, stdout
 from datetime import date, timedelta, datetime
@@ -219,11 +219,11 @@ def get_exps_qtr_main():
             for start_date, end_date, debit_sum, credit_sum, total in period_list:
                 csv_writer.writerow((start_date, end_date, debit_sum, credit_sum, total))
 
-            sum_revenue = (period_list[0][2] + period_list[0][3])
-            print("{} Expenses for {}-Q{} = ${}".format(acct_name.split('_')[-1], str_year, str_quarter, sum_revenue))
+            sum_expenses = (period_list[0][2] + period_list[0][3])
+            print("{} Expenses for {}-Q{} = ${}".format(acct_name.split('_')[-1], str_year, str_quarter, sum_expenses))
 
-        tot_revenue = period_list[0][4]
-        print("\n{} Expenses for {}-Q{} = ${}".format("TOTAL", str_year, str_quarter, tot_revenue))
+        tot_expenses = period_list[0][4]
+        print("\n{} Expenses for {}-Q{} = ${}".format("TOTAL", str_year, str_quarter, tot_expenses))
 
         # no save needed, we're just reading..
         gnucash_session.end()
