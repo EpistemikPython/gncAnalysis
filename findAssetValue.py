@@ -31,6 +31,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from math import log10
 from gnucash import Session, GncNumeric
+from gnucash.gnucash_core_c import GNC_HOW_DENOM_EXACT, GNC_HOW_RND_ROUND
 
 
 # noinspection PyUnresolvedReferences
@@ -38,13 +39,13 @@ def gnc_numeric_to_python_decimal(numeric):
     negative = numeric.negative_p()
     sign = 1 if negative else 0
 
-    copy = GncNumeric(numeric.num(), numeric.denom())
-    result = copy.to_decimal(None)
+    val = GncNumeric(numeric.num(), numeric.denom())
+    result = val.to_decimal(None)
     if not result:
-        raise Exception("gnc numeric value {} CAN'T be converted to decimal!".format(copy.to_string()))
+        raise Exception("gnc numeric value {} CAN'T be converted to decimal!".format(val.to_string()))
 
-    digit_tuple = tuple(int(char) for char in str(copy.num()) if char != '-')
-    denominator = copy.denom()
+    digit_tuple = tuple(int(char) for char in str(val.num()) if char != '-')
+    denominator = val.denom()
     exponent = int(log10(denominator))
     assert( (10 ** exponent) == denominator )
     return Decimal((sign, digit_tuple, -exponent))
@@ -65,20 +66,24 @@ def account_from_path(top_account, account_path, original_path=None):
         return account
 
 
-def show_asset_info(acct, idate, cur):
-    acct_name = acct.GetName()
-    acct_bal = acct.GetBalanceAsOfDate(idate)
-    acct_bal_dec = gnc_numeric_to_python_decimal(acct_bal)
-    acct_comm = acct.GetCommodity()
-    print("{} balance of shares on {} = {}".format(acct_name, idate, acct_bal_dec))
+def get_asset_balance(acct, ast_date, cur):
+    acct_cur = GncNumeric(0)
+    acct_bal = acct.GetBalanceAsOfDate(ast_date)
+    if acct_bal.positive_p():
+        acct_bal_dec = gnc_numeric_to_python_decimal(acct_bal)
+        acct_name = acct.GetName()
+        acct_comm = acct.GetCommodity()
+        if not acct_comm.get_fullname() == cur.get_fullname():
+            print("{} balance of shares on {} = {}".format(acct_name, ast_date, acct_bal))
 
-    acct_cad = gnc_numeric_to_python_decimal(acct.ConvertBalanceToCurrencyAsOfDate(acct_bal, acct_comm, cur, idate))
-    print("{} balance on 2018-12-31 = CAD${}".format(acct_name, acct_cad))
+        acct_cur = acct.ConvertBalanceToCurrencyAsOfDate(acct_bal, acct_comm, cur, ast_date)
+        print("{} balance on {} = {}${}".format(acct_name, ast_date, cur.get_mnemonic(), acct_cur))
+
+    return acct_cur
 
 
 # noinspection PyUnresolvedReferences, PyBroadException
 def find_av_main():
-    global gnucash_session
     exe = argv[0].split('/')[-1]
     if len(argv) < 6:
         print("NOT ENOUGH parameters!")
@@ -88,6 +93,7 @@ def find_av_main():
 
     print("\nrunning {} at run-time: {}\n".format(exe, str(datetime.now())))
 
+    global gnucash_session
     try:
         (gnucash_file, str_year, str_month, str_day) = argv[1:5]
         print("find asset values in {} on {}-{}-{}".format(gnucash_file, str_year, str_month, str_day))
@@ -108,23 +114,28 @@ def find_av_main():
         root_account = book.get_root_account()
 
         account_of_interest = account_from_path(root_account, account_path)
-        iname = account_of_interest.GetName()
+        acct_name = account_of_interest.GetName()
 
-        show_asset_info(account_of_interest, date_of_interest, CAD)
+        total = get_asset_balance(account_of_interest, date_of_interest, CAD)
 
         # get the list of all descendant accounts
         descendants = account_of_interest.get_descendants()
 
         if len(descendants) > 0:
             # get the values for EACH sub-account too
-            print("\nDescendants of {}:".format(iname))
+            print("\nDescendants of {}:".format(acct_name))
             for subAcct in descendants:
-                show_asset_info(subAcct, date_of_interest, CAD)
+                total = total.add(get_asset_balance(subAcct, date_of_interest, CAD), GNC_HOW_DENOM_EXACT, GNC_HOW_RND_ROUND)
+
+        print("total {} value = {}${}".format(acct_name, CAD.get_mnemonic(), total))
+        total_dec = gnc_numeric_to_python_decimal(total)
+        print("total {} value = {}${}".format(acct_name, CAD.get_mnemonic(), total_dec))
 
         # no save needed, we're just reading...
         gnucash_session.end()
 
     except Exception as ae:
+        print("Exception: {}".format(ae))
         if "gnucash_session" in locals() and gnucash_session is not None:
             gnucash_session.end()
 
