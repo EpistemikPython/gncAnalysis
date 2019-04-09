@@ -31,7 +31,6 @@ from datetime import date, datetime
 from decimal import Decimal
 from math import log10
 from gnucash import Session, GncNumeric
-from gnucash.gnucash_core_c import GNC_HOW_DENOM_EXACT, GNC_HOW_RND_ROUND
 
 
 # noinspection PyUnresolvedReferences
@@ -67,16 +66,16 @@ def account_from_path(top_account, account_path, original_path=None):
 
 
 def get_asset_balance(acct, ast_date, cur):
-    acct_cur = GncNumeric(0)
+    acct_cur = 0
     acct_bal = acct.GetBalanceAsOfDate(ast_date)
     if acct_bal.positive_p():
         acct_bal_dec = gnc_numeric_to_python_decimal(acct_bal)
         acct_name = acct.GetName()
         acct_comm = acct.GetCommodity()
         if not acct_comm.get_fullname() == cur.get_fullname():
-            print("{} balance of shares on {} = {}".format(acct_name, ast_date, acct_bal))
+            print("{} balance of shares on {} = {}".format(acct_name, ast_date, acct_bal_dec))
 
-        acct_cur = acct.ConvertBalanceToCurrencyAsOfDate(acct_bal, acct_comm, cur, ast_date)
+        acct_cur = gnc_numeric_to_python_decimal(acct.ConvertBalanceToCurrencyAsOfDate(acct_bal, acct_comm, cur, ast_date))
         print("{} balance on {} = {}${}".format(acct_name, ast_date, cur.get_mnemonic(), acct_cur))
 
     return acct_cur
@@ -125,11 +124,9 @@ def find_av_main():
             # get the values for EACH sub-account too
             print("\nDescendants of {}:".format(acct_name))
             for subAcct in descendants:
-                total = total.add(get_asset_balance(subAcct, date_of_interest, CAD), GNC_HOW_DENOM_EXACT, GNC_HOW_RND_ROUND)
+                total += get_asset_balance(subAcct, date_of_interest, CAD)
 
         print("total {} value = {}${}".format(acct_name, CAD.get_mnemonic(), total))
-        total_dec = gnc_numeric_to_python_decimal(total)
-        print("total {} value = {}${}".format(acct_name, CAD.get_mnemonic(), total_dec))
 
         # no save needed, we're just reading...
         gnucash_session.end()
